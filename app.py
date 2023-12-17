@@ -29,5 +29,31 @@ def generate_tweets(topic: str, mood: str = '', style: str = ''):
     if st.session_state.n_requests >= 5:
         st.session_state.text_error = 'Too many requests. Please try again later.'
         logging.info(f'Session requests limit reached : {st.session_state.n_requests}')
-
+        st.session_state.n_requests = 1
+        return
     
+    st.session_state.tweet = ''
+    st.session_state.image = ''
+    st.session_state.text_error = ''
+
+    if not topic:
+        st.session_State.text_error = 'Please enter a topic'
+        return
+    
+    with text_spinner_placeholder:
+        with st.spinner('Please wait while your tweet is being generated...'):
+            mood_prompt = f'{mood} ' if mood else ''
+            if style:
+                twitter = twe.Tweets(account=style)
+                tweets = twitter.fetch_tweets()
+                tweets_prompt = '\n\n'.join(tweets)
+                prompt = (
+                    f'Write a {mood_prompt}Tweet about {topic} in less than 120 character '
+                    f'and in the style of the following Tweets: \n\n{tweets_prompt}\n\n'
+                )
+            else:
+                prompt = f'Write a {mood_prompt}Tweet about {topic} in less than 120 characters:\n\n'
+
+            openai = oai.Openai()
+            flagged = openai.moderate(prompt)
+            mood_output = f', Mood:'
