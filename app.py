@@ -1,4 +1,3 @@
-#https://github.com/kinosal/tweet/tree/main
 '''Streamlit app to generate Tweets'''
 
 # import from standard library
@@ -56,4 +55,21 @@ def generate_tweets(topic: str, mood: str = '', style: str = ''):
 
             openai = oai.Openai()
             flagged = openai.moderate(prompt)
-            mood_output = f', Mood:'
+            mood_output = f', Mood: {mood}' if mood else ''
+            style_output = f'. Style: {style}' if style else ''
+            if flagged:
+                st.session_state.text_error = 'Input flagged as inappropriate. Please try again.'
+                logging.info(f'Topic: {topic}{mood_output}{style_output}\m')
+                return
+            else:
+                st.session_state.text_error = ''
+                st.session_state.n_requests += 1
+                streamlit_analytics.start_tracking()
+                st.session_state.tweet = (
+                    openai.complete(prompt=prompt).strip().replace('"', "")
+                )
+                logging.info(
+                    f'Topic: {topic}{mood_output}{style_output}\n'
+                    f'Tweet: {st.session_state.tweet}'
+                )
+
