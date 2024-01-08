@@ -102,4 +102,134 @@ def generate_image(prompt: str):
             st.session_state.image = openai.image(processed_prompt)
             logging.info(f'Tweet: {prompt}\nImage prompt: {processed_prompt}')
 
+# Configure Streamlit
+st.set_page_config(page_title='Tweet Generator', page_icon='🐦')
+if 'tweet' not in st.session_state:
+    st.session_state.tweet = ''
+if 'image' not in st.session_state:
+    st.session_state.image = ''
+if 'text_error' not in st.session_state:
+    st.session_state.text_error = ''
+if 'image_error' not in st.session_state:
+    st.session_state.image_error = ''
+if 'feeling_lucky' not in st.session_state:
+    st.session_state.feeling_lucky = False
+if 'n_requests' not in st.session_state:
+    st.session_state.n_requests = 0
 
+# Force to responsive layout on mobile
+st.write(
+    '''<style>
+    [data-testid='column'] {
+        width: calc(50% - 1rem);
+        flex: 1 1 calc(50% - 1rem);
+        min_width: calc(50% - 1rem);
+    }
+    </style>''',
+)
+
+# Render page
+streamlit_analytics.start_tracking()
+st.title('Generate Tweets')
+st.markdown(
+    "This mini-app generates Tweets using OpenAI's [GPTs](https://beta.openai.com/docs/models/overview) for texts and [DALL·E](https://beta.openai.com/docs/guides/images) for images. You can find the code on [GitHub](https://github.com/kinosal/tweet) and the author on [Twitter](https://twitter.com/kinosal)."
+)
+
+topic = st.text_input(label='Topic (or hashtag)', placeholder='AI')
+mood = st.text_input(
+    label='Mood (e.g. inspirational, funny, serious) (optional)',
+    placeholder='inspirational',
+)
+style = st.text_input(
+    label="Twitter account handle to style-copy recent Tweets (optional, limited by Twitter's API)",
+    placeholder="elonmusk",
+)
+col1, col2 = st.columns(2)
+with col1:
+    st.session_state.feeling_lucky = not st.button(
+        label='Generate Text',
+        type='primary',
+        on_click=generate_text,
+        args=(topic, mood, style),
+    )
+with col2:
+    with open('moods.txt') as f:
+        sample_moods = f.read().splitlines()
+    st.session_state.feeling_lucky = st.button(
+        label='Feeling lucky',
+        type='secondary',
+        on_click=generate_text,
+        args=('an interesting topic', random.choice(sample_moods), '')
+    )
+
+text_spinner_placeholder = st.empty()
+if st.session_state.text_error:
+    st.error(st.session_state.text_error)
+
+if st.session_state.tweet:
+    st.markdown('''---''')
+    st.text_area(label='Tweet', value=st.session_state.tweet, height=100)
+    col1, col2 = st.columns(2)
+    with col1:
+        components.html(
+            f"""
+                <a href="https://twitter.com/share?ref_src=twsrc%5Etfw" class="twitter-share-button" data-size="large" data-text="{st.session_state.tweet}\n - Tweet generated via" data-url="https://tweets.streamlit.app" data-show-count="false">Tweet</a><script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+            """,
+            height=45,
+        )
+    with col2:
+        if st.session_state.feeling_lucky:
+            st.button(
+                label='Generate text',
+                type='secondary',
+                on_click=generate_text,
+                args=('an interesting topic', random.choice(sample_moods), ''),
+            )
+        else:
+            st.button(
+                label='Regenerate text',
+                type='secondary',
+                on_click=generate_text,
+                args=(topic, mood, style),
+            )
+
+    if not st.session_state.image:
+        st.button(
+            label='Generate image',
+            type='primary',
+            on_click=generate_image,
+            args=[st.session_state.tweet],
+        )
+    else:
+        st.image(st.session_state.image)
+        st.button(
+            label='Regenerate image',
+            type='secondary',
+            on_click=generate_image,
+            args=[st.session_state.tweet],
+        )
+
+    image_spinner_placeholder = st.empty()
+    if st.session_state.image_error:
+        st.error(st.session_state.image_error)
+
+    st.markdown('''---''')
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(
+            '**Other Streamlit apps by [@SkSzymon](https://twitter.com/skszymon)**'
+        )
+        st.markdown('[Twitter Wrapped](https://twitter-likes.streamlit.app)')
+        st.markdown("[Content Summarizer](https://web-summarizer.streamlit.app)")
+        st.markdown("[Code Translator](https://english-to-code.streamlit.app)")
+        st.markdown("[PDF Analyzer](https://pdf-keywords.streamlit.app)")
+    with col2:
+        st.write("If you like this app, please consider to")
+        components.html(
+            """
+            """,
+            height=45,
+        )
+        st.write("so I can keep it alive. Thank you!")
+
+streamlit_analytics.stop_tracking()
