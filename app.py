@@ -119,13 +119,14 @@ if 'n_requests' not in st.session_state:
 
 # Force to responsive layout on mobile
 st.write(
-    '''<style>
-    [data-testid='column'] {
+    """<style>
+    [data-testid="column"] {
         width: calc(50% - 1rem);
         flex: 1 1 calc(50% - 1rem);
-        min_width: calc(50% - 1rem);
+        min-width: calc(50% - 1rem);
     }
-    </style>''',
+    </style>""",
+    unsafe_allow_html=True,
 )
 
 # Render page
