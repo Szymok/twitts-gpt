@@ -20,7 +20,7 @@ logging.basicConfig(
 )
 
 # Define functions
-def generate_tweets(topic: str, mood: str = '', style: str = ''):
+def generate_text(topic: str, mood: str = '', style: str = ''):
     '''
     Generate tweets based on topic and mood
     '''
